@@ -1,0 +1,8 @@
+{
+  "name": "qisi-math-coach",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node start.mjs", "test": "node --test", "check:ai": "node scripts/check-ai.mjs" },
+  "engines": { "node": ">=22" }
+}
