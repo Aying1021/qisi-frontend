@@ -104,8 +104,12 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'");
   try {
-    if (req.headers.host !== `127.0.0.1:${port}` && req.headers.host !== `localhost:${port}`) throw new AppError('仅支持本机访问。', 403);
-    if (req.method === 'POST' && req.headers.origin && ![`http://127.0.0.1:${port}`, `http://localhost:${port}`].includes(req.headers.origin)) throw new AppError('请求来源无效。', 403);
+    if (req.method === 'POST' && req.headers.origin) {
+      let originHost = '';
+      try { originHost = new URL(req.headers.origin).hostname; } catch { originHost = ''; }
+      const requestHost = (req.headers.host || '').split(':')[0];
+      if (!originHost || originHost !== requestHost) throw new AppError('请求来源无效。', 403);
+    }
     const url = new URL(req.url, 'http://localhost');
     if (url.pathname.startsWith('/api/')) return await api(req, res, url);
     const file = staticFiles[url.pathname];
@@ -113,6 +117,6 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': 'no-cache' }); res.end(fs.readFileSync(path.join(root, 'public', file[0])));
   } catch (error) { send(res, error.status || 500, { error: error instanceof AppError ? error.message : '服务处理失败，请稍后重试。' }); }
 });
-const port = Number(process.env.PORT || 3000);
-server.listen(port, '127.0.0.1', () => console.log(`启思数学已启动：http://127.0.0.1:${port}`));
+const port = Number(process.env.PORT || 8080);
+server.listen(port, '0.0.0.0', () => console.log(`启思数学已启动：本机访问 http://127.0.0.1:${port}，已监听全部网络接口。`));
 server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? '端口已被占用，请关闭先前窗口，或在 .env 中设置 PORT=3001。' : '服务启动失败。'); process.exitCode = 1; });
