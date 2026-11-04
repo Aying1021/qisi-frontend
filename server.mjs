@@ -9,8 +9,15 @@ import { makeVariant, checkRoots } from './lib/math.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 try { loadEnvFile(path.join(root, '.env')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-const dbPath = process.env.DATA_FILE || path.join(root, 'data', 'sessions.json');
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+let dbPath = process.env.DATA_FILE || path.join(root, 'data', 'sessions.json');
+try {
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  fs.accessSync(path.dirname(dbPath), fs.constants.W_OK);
+} catch {
+  // 代码目录只读（云函数环境）——改用可写的 /tmp
+  dbPath = '/tmp/qisi-sessions.json';
+  try { fs.mkdirSync('/tmp', { recursive: true }); } catch { /* /tmp 通常已存在 */ }
+}
 let records = [];
 if (fs.existsSync(dbPath)) records = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
 const save = () => { fs.writeFileSync(`${dbPath}.tmp`, JSON.stringify(records, null, 2)); fs.renameSync(`${dbPath}.tmp`, dbPath); };
