@@ -117,6 +117,6 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': 'no-cache' }); res.end(fs.readFileSync(path.join(root, 'public', file[0])));
   } catch (error) { send(res, error.status || 500, { error: error instanceof AppError ? error.message : '服务处理失败，请稍后重试。' }); }
 });
-const port = Number(process.env.PORT || 8080);
+const port = Number(process.env.PORT || process.env.CAPort || 8080);
 server.listen(port, '0.0.0.0', () => console.log(`启思数学已启动：本机访问 http://127.0.0.1:${port}，已监听全部网络接口。`));
 server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? '端口已被占用，请关闭先前窗口，或在 .env 中设置 PORT=3001。' : '服务启动失败。'); process.exitCode = 1; });
